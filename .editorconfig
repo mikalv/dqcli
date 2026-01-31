@@ -1,0 +1,19 @@
+# EditorConfig is awesome: https://editorconfig.org
+
+#
+root = true
+[*]
+end_of_line = lf
+insert_final_newline = true
+
+[*.{js,py,rs,ex,exs,yaml,yml,toml}]
+charset = utf-8
+indent_style = space
+indent_size = 2
+
+[Makefile]
+indent_style = tab
+
+[lib/**.{js,py,rs,ex,exs,yaml,yml,toml}]
+indent_style = space
+indent_size = 2
