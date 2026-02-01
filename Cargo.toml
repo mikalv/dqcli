@@ -12,8 +12,8 @@ version = "0.2.0"
 authors = ["Mikal Villa <mail@mux.rs>"]
 license = "Apache-2.0"
 repository = "https://github.com/mikalv/domainstorm"
-keywords = ["cli", "tui", "domain", "whois", "rdap", "availability", "dns"]
-categories = ["command-line-utilities", "network-programming", "dns"]
+keywords = ["cli", "tui", "domain", "rdap", "availability"]
+categories = ["command-line-utilities", "network-programming", "command-line-interface"]
 readme = "README.md"
 edition = "2021"
 

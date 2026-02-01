@@ -42,13 +42,13 @@ impl FilterMode {
     }
 }
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 struct Config {
     #[serde(default)]
     tlds: TldConfig,
 }
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 struct TldConfig {
     #[serde(default)]
     always: Vec<String>,
@@ -84,14 +84,18 @@ fn apply_config_to_tlds(mut tlds: Vec<String>, config: &Config) -> Vec<String> {
     tlds
 }
 
-// Priority TLDs - shown first in TUI
-const PRIORITY_TLDS: &[&str] = &[
-    "com", "net", "org", "io", "ai", "dev", "app", "co", "me", "tech",
-    "xyz", "online", "site", "store", "shop", "blog", "cloud", "digital",
-];
+fn get_default_config_toml() -> String {
+    r#"# Domain Query (dq) Configuration
 
-fn get_builtin_tlds() -> Vec<String> {
-    PRIORITY_TLDS.iter().map(|s| s.to_string()).collect()
+[tlds]
+# TLDs to always include in results, regardless of IANA list
+# always = ["com", "net", "org", "io", "dev", "rs", "no", "pm"]
+always = []
+
+# TLDs to never include/hide from results
+# never = ["adult", "xxx", "reklame"]
+never = []
+"#.to_string()
 }
 
 fn parse_domain_query(query: &str) -> (String, Option<String>) {
@@ -128,12 +132,20 @@ struct Args {
     query: Option<String>,
 
     /// Output results as NDJSON stream (one JSON object per line)
-    #[arg(long)]
+    #[arg(long, short = 'j')]
     ndjson: bool,
 
     /// Comma-separated list of specific TLDs to check (e.g., dev,ai,com,net,org,io)
     #[arg(long, value_delimiter = ',')]
     tlds: Option<Vec<String>>,
+
+    /// Print the default config to stdout and exit
+    #[arg(long)]
+    print_default_config: bool,
+
+    /// Write the default config to the config path and exit
+    #[arg(long)]
+    write_default_config: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -412,6 +424,16 @@ impl App {
     }
 }
 
+const PRIORITY_TLDS: &[&str] = &[
+    "com", "net", "org", "io", "ai", "dev", "app", "co", "me", "tech",
+    "xyz", "online", "site", "store", "shop", "blog", "cloud", "digital",
+    "eu", "us", "info", "email", "pro", "live", "zone", "team", "solutions"
+];
+
+fn get_builtin_tlds() -> Vec<String> {
+    PRIORITY_TLDS.iter().map(|s| s.to_string()).collect()
+}
+
 /// Sort TLDs with priority TLDs first, then alphabetically
 fn sort_tlds_with_priority(mut tlds: Vec<String>) -> Vec<String> {
     tlds.sort_by(|a, b| {
@@ -441,6 +463,26 @@ fn status_order(status: &DomainStatus) -> u8 {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
+
+    if args.print_default_config {
+        println!("{}", get_default_config_toml());
+        return Ok(());
+    }
+
+    if args.write_default_config {
+        if let Some(path) = config_path() {
+            if let Some(parent) = path.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            std::fs::write(&path, get_default_config_toml())?;
+            println!("Default config written to: {}", path.display());
+        } else {
+            eprintln!("Error: Could not determine config path");
+            std::process::exit(1);
+        }
+        return Ok(());
+    }
+
     let config = load_config();
 
     let rt = tokio::runtime::Runtime::new()?;

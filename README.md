@@ -41,6 +41,9 @@ dq etellerannetlangtdomene.com --ndjson | jq .
 
 ```toml
 [tlds]
+always = ["com", "io", "dev"]
+never  = ["xxx", "adult"]
+```
 
 ## Library (librdap-storm)
 
